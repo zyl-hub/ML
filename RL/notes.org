@@ -1,5 +1,4 @@
 #+TITLE: 刘建平Pinard博客学习笔记
-#+STARTUP: showall
 * 模型基础
 ** S
    state
