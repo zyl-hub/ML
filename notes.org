@@ -1,0 +1,226 @@
+#+TITLE: 刘建平Pinard博客学习笔记
+#+STARTUP: showall
+* 模型基础
+** S
+   state
+** A
+   actions
+** R
+   rewards
+** policy
+   在状态s时采取动作a的概率
+   $\pi(a|s) = P(A_t=a | S_t=s)$
+** value function
+   是一个期望函数
+   $v_{\pi}(s) = \mathbb{E}_{\pi}(R_{t+1} + \gamma R_{t+2} + \gamma^2R_{t+3}+...|S_t=s)$
+   输入状态或状态和动作，获取return
+*** 状态价值函数
+    $v_{\pi}(s) = \mathbb{E}_{\pi}(G_t|S_t=s ) = \mathbb{E}_{\pi}(R_{t+1} + \gamma R_{t+2} + \gamma^2R_{t+3}+...|S_t=s)$
+*** 动作价值函数
+    $q_{\pi}(s,a) = \mathbb{E}_{\pi}(G_t|S_t=s, A_t=a) = \mathbb{E}_{\pi}(R_{t+1} + \gamma R_{t+2} + \gamma^2R_{t+3}+...|S_t=s,A_t=a)$
+    
+    
+** discount factor
+   $\gamma$
+** transport
+   $P_{ss'}^a$
+   $P_{ss'}^a = \mathbb{E}(S_{t+1}=s'|S_t=s, A_t=a)$
+** 探索率
+   $\epsilon$
+* 马尔科夫决策过程
+** 贝尔曼方程
+    - 状态价值函数
+      $v_{\pi}(s) = \mathbb{E}_{\pi}(R_{t+1} + \gamma v_{\pi}(S_{t+1}) | S_t=s)$
+    - 动作价值函数
+      $q_{\pi}(s,a) = \mathbb{E}_{\pi}(R_{t+1} + \gamma q_{\pi}(S_{t+1},A_{t+1}) | S_t=s, A_t=a)$
+** 价值函数基于状态的递推关系
+    $$\begin{align} v_{\pi}(s) &= \mathbb{E}_{\pi}(R_{t+1} + \gamma R_{t+2} + \gamma^2R_{t+3}+...|S_t=s) \\ &=  \mathbb{E}_{\pi}(R_{t+1} + \gamma (R_{t+2} + \gamma R_{t+3}+...)|S_t=s) \\ &=  \mathbb{E}_{\pi}(R_{t+1} + \gamma G_{t+1} | S_t=s) \\ &=  \mathbb{E}_{\pi}(R_{t+1} + \gamma v_{\pi}(S_{t+1}) | S_t=s)  \end{align}$$
+    由此得
+    $v_{\pi}(s) = \mathbb{E}_{\pi}(R_{t+1} + \gamma v_{\pi}(S_{t+1}) | S_t=s)$
+    称为贝尔曼方程
+    同理可得动作价值函数的贝尔曼方程
+    $q_{\pi}(s,a) =\mathbb{E}_{\pi}(R_{t+1} + \gamma q_{\pi}(S_{t+1},A_{t+1}) | S_t=s, A_t=a)$
+
+** 状态价值函数和动作价值函数的关系
+    $v_{\pi}(s) = \sum\limits_{a \in A} \pi(a|s)q_{\pi}(s,a)$
+    阐述: 状态价值函数是所有动作价值函数基于策略$\pi$的期望
+    某状态下所有状态动作价值乘以该动作出现的概率，最后求和，就得到了对应的状态价值。
+    状态价值函数vπ(s)表示动作价值函数qπ(s,a)
+    $q_{\pi}(s,a) = R_s^a + \gamma \sum\limits_{s' \in S}P_{ss'}^av_{\pi}(s')$
+    阐述：x状态动作价值有两部分相加组成，第一部分是即时奖励，第二部分是环境所有可能出现的下一个状态的概率乘以该下一状态的状态价值，最后求和，并加上衰减。
+    把上面两个式子互相结合起来，我们可以得到：
+    $v_{\pi}(s) = \sum\limits_{a \in A} \pi(a|s)(R_s^a + \gamma \sum\limits_{s' \in S}P_{ss'}^av_{\pi}(s'))$
+    $q_{\pi}(s,a) = R_s^a + \gamma \sum\limits_{s' \in S}P_{ss'}^a\sum\limits_{a' \in A} \pi(a'|s')q_{\pi}(s',a')$
+
+** 最优价值函数
+   定义最优状态价值函数是所有策略下产生的众多状态价值函数中的最大者
+   $v_{*}(s) = \max_{\pi}v_{\pi}(s)$
+   定义最优动作价值函数是所有策略下产生的众多动作状态价值函数中的最大者
+   $q_{*}(s,a) = \max_{\pi}q_{\pi}(s,a)$
+   对于最优的策略，基于动作价值函数我们可以定义为：
+   $\pi_{*}(a|s)= \begin{cases} 1 & {if\;a=\arg\max_{a \in A}q_{*}(s,a)}\\ 0 & {else} \end{cases}$
+   注意这里的 $\pi$ 是一个概率,可以理解为当动作是取得最大动作价值函数的动作时,选择该动作的概率赋值为1
+   利用状态价值函数和动作价值函数之间的关系
+   $v_{*}(s) = \max_{a}q_{*}(s,a)$
+   $q_{*}(s,a) = R_s^a + \gamma \sum\limits_{s' \in S}P_{ss'}^av_{*}(s')$
+   利用上面的两个式子也可以得到和上一部分末尾类似的式子
+   $v_{*}(s) = \max_a(R_s^a + \gamma \sum\limits_{s' \in S}P_{ss'}^av_{*}(s'))$
+   $q_{*}(s,a) = R_s^a + \gamma \sum\limits_{s' \in S}P_{ss'}^a\max_{a'}q_{*}(s',a')$
+   基于价值的学习
+   基于动作的学习
+*** argmax解释
+    y = f(t) 是一般常见的函数式，如果给定一个t值，f（t）函数式会赋一个值给y。
+    y = max f(t) 代表：y 是f(t)函式所有的值中最大的output。
+    y = argmax f(t) 代表：y 是f(t)函式中，会产生最大output的那个参数t。
+* 用动态规划（DP）求解
+** 动态规划的关键点
+   问题的最优解可以由若干小问题的最优解构成，即通过寻找子问题的最优解来得到问题的最优解。
+   可以找到子问题状态之间的递推关系，通过较小的子问题状态递推出较大的子问题的状态。
+** 强化学习的两个基本问题
+*** 预测
+    给定强化学习的6个要素：状态集S, 动作集A, 模型状态转化概率矩阵P, 即时奖励R，衰减因子$\gamma$,  给定策略 $\pi$ ， 求解该策略的状态价值函数$v(\pi)$
+
+*** 控制
+    给定强化学习的5个要素：状态集S, 动作集A, 模型状态转化概率矩阵P, 即时奖励R，衰减因子$\gamma$, 求解最优的状态价值函数 $v_{*}$ 和最优策略 $\pi_{*}$
+
+** 策略评估
+   求解给定策略的状态价值函数
+   基本思路:从任意一个状态价值函数开始，依据给定的策略，结合贝尔曼期望方程、状态转移概率和奖励同步迭代更新状态价值函数，直至其收敛，得到该策略下最终的状态价值函数。
+   $v_{k+1}(s) = \sum\limits_{a \in A} \pi(a|s)(R_s^a + \gamma \sum\limits_{s' \in S}P_{ss'}^av_{k}(s'))$
+   和上一节的式子唯一的区别是由于我们的策略π已经给定，对应加上了迭代轮数的下标。
+
+** example
+   [[https://images2018.cnblogs.com/blog/1042406/201808/1042406-20180812184148124-1485684702.jpg]]
+
+** 策略迭代
+   https://images2018.cnblogs.com/blog/1042406/201808/1042406-20180812191537706-1156414836.jpg
+   1. 使用当前策略π∗评估计算当前策略的最终状态价值v∗
+   2. 根据状态价值v∗根据一定的方法（比如贪婪法）更新策略π∗，接着回到第一步，一直迭代下去，最终得到收敛的策略π∗和状态价值v∗。
+
+** 价值迭代
+   和上一节相比，我们没有等到状态价值收敛才调整策略，而是随着状态价值的迭代及时调整策略, 这样可以大大减少迭代次数。
+   $v_{k+1}(s) = \max_{a \in A}(R_s^a + \gamma \sum\limits_{s' \in S}P_{ss'}^av_{k}(s'))$
+   每次价值迭代都用上了贪婪法,直观上看收敛加速
+* 用蒙特卡罗法（MC）求解
+** 不基于模型的强化学习问题
+   很多强化学习问题，我们没有办法事先得到模型状态转化概率矩阵P，这时如果仍然需要我们求解强化学习问题
+
+
+** 求解方式
+   通过采样若干经历完整的状态序列(episode)来估计状态的真实价值
+   不需要依赖于模型状态转化概率
+   经历过的完整序列学习，完整的经历越多，学习效果越好。
+*** episode定义
+    即开始到中止为一个episod
+
+
+** 蒙特卡罗法求解预测
+   一个给定策略π的完整有T个状态的状态序列:$S_1,A_1,R_2,S_2,A_2,...S_t,A_t,R_{t+1},...R_T, S_T$
+*** 一个简易的思路
+    $G_t =R_{t+1} + \gamma R_{t+2} + \gamma^2R_{t+3}+...  \gamma^{T-t-1}R_{T}$
+    $v_{\pi}(s) \approx average(G_t), s.t. S_t=s$
+*** 累进更新平均值
+    $N(S_t) = N(S_t)  +1$
+    $V(S_t) = V(S_t)  + \frac{1}{N(S_t)}(G_t -  V(S_t) )$
+    数据较多时直接用一个数代替数据总数
+
+
+** 蒙特卡罗法控制
+   epsilon greedy
+
+
+** on-policy版本的MC
+   init Q(s,a)=0,状态次数N(s,a)=0,采样次数k=0
+
+   采样完整序列
+   k = k + 1
+
+   $G_t =R_{t+1} + \gamma R_{t+2} + \gamma^2R_{t+3}+...  \gamma^{T-t-1}R_{T}$
+   $N(S_t, A_t) = N(S_t, A_t)  +1$
+   $Q(S_t, A_t) = Q(S_t, A_t) + \frac{1}{N(S_t, A_t)}(G_t -  Q(S_t, A_t) )$
+   
+   epsilon greedy
+   epsilon = 1/k
+   $\pi(a|s)= \begin{cases} \epsilon/m + 1- \epsilon & {if\; a^{*} = \arg\max_{a \in A}Q(s,a)}\\ \epsilon/m & {else} \end{cases}$
+
+   如果所有的Q(s,a)收敛，则对应的所有Q(s,a)即为最优的动作价值函数q∗。对应的策略π(a|s)即为最优策略π∗。否则转到第二步继续采样更多数据
+* 时序差分TD
+蒙特卡罗需要完整的状态序列
+** 要点
+   $R_{t+1} + \gamma v(S_{t+1})$ 来替换$G_t =R_{t+1} + \gamma R_{t+2} + \gamma^2R_{t+3}+...  \gamma^{T-t-1}R_{T}$
+   $R_{t+1} + \gamma V(S_{t+1}) -V(S_t)$ 作为每次的误差
+   没有完整序列。用0-1的系数 $\alpha$ 代替误差前面的系数
+   $V(S_t) = V(S_t)  + \frac{1}{N(S_t)}(G_t -  V(S_t) )$
+
+   - Final Version
+     $V(S_t) = V(S_t)  + \alpha(G_t -  V(S_t) )$
+     $Q(S_t, A_t) = Q(S_t, A_t) +\alpha(G_t -  Q(S_t, A_t) )$
+
+** n步时序差分
+   $G_t^{(2)} = R_{t+1} + \gamma  R_{t+2} +  \gamma^2V(S_{t+2})$
+
+   $G_t^{(n)} = R_{t+1} + \gamma  R_{t+2} + ... + \gamma^{n-1} R_{t+n}  + \gamma^nV(S_{t+n})$
+
+   随着n增大，TD越来越接近MC
+
+** TD $\lambda$  
+   给每一步添加上一个权重$(1-\lambda)\lambda^{n-1}$
+   λ−收获：$G_t^{\lambda} = (1-\lambda)\sum\limits_{n=1}^{\infty}\lambda^{n-1}G_t^{(n)}$
+   价值函数迭代公式
+   $V(S_t) = V(S_t)  + \alpha(G_t^{\lambda} -  V(S_t) )$
+   $Q(S_t, A_t) = Q(S_t, A_t) +\alpha(G_t^{\lambda}-  Q(S_t, A_t) )$
+
+   $E_0(s) = 0$
+   $E_t(s) = \gamma\lambda E_{t-1}(s) +1(S_t=s) = \begin{cases} 0& {t<k}\\ (\gamma\lambda)^{t-k}& {t\geq k} \end{cases}, \;\;s.t.\; \lambda,\gamma \in [0,1], s\; is\; visited \;once\;at\; time\; k$
+   此时我们TD(λ)的价值函数更新式子可以表示为：
+   $\delta_t = R_{t+1} + \gamma v(S_{t+1}) -V(S_t)$
+   $V(S_t) = V(S_t)  + \alpha\delta_tE_t(s)$
+* SARSA
+** var
+   S, A, R, $\gamma$, $\epsilon$, $q_*$, $\pi_{*}$
+
+** $\epsilon-greedy$
+   $\pi(a|s)= \begin{cases} \epsilon/m + 1- \epsilon & {if\; a^{*} = \arg\max_{a \in A}Q(s,a)}\\ \epsilon/m & {else} \end{cases}$
+
+** 直观解释
+   S状态选择一个action,转到S',得到reward,在S',选择一个动作A',但是不执行动作,只用来更新价值函数
+   $Q(S,A) = Q(S,A) + \alpha(R+\gamma Q(S',A') - Q(S,A))$
+
+** SARSA流程
+   Input:迭代轮数T,状态集A,步长(学习率) $\alpha$,衰减因子$\gamma$,探索率$\epsilon$
+   Output:所有状态和动作对应的价值Q
+
+   - SARSA Algorithm
+     1.初始化S为当前序列的第一个状态 设置A为 $\epsilon$ 贪婪法在S选择的action
+     2.在S执行A,得到新状态S'和奖励R
+     3.$\epsilon$ 贪婪法在S'选择新的动作A'
+     4.更新价值函数Q(S,A):
+     $Q(S,A) = Q(S,A) + \alpha(R+\gamma Q(S',A') - Q(S,A))$
+     5.S=S',A=A'
+     6.如果S′是终止状态，当前轮迭代完毕，否则转到步骤2
+
+* Q-Learning
+** 引入
+   对于Q-Learning，我们会使用 $\epsilon-greedy$ 来选择新的动作，这部分和SARSA完全相同。但是对于价值函数的更新，Q-Learning使用的是贪婪法，而不是SARSA的 $\epsilon-greedy$ 。这一点就是SARSA和Q-Learning本质的区别。
+
+** Q-Learning算法概述
+   [[https://img2018.cnblogs.com/blog/1042406/201809/1042406-20180918202423478-583844904.jpg][Q-Learning]]
+   对于Q-Learning，它基于状态S' ，没有使用 $\epsilon-greedy$ 选择A′，而是使用贪婪法选择A′，也就是说，选择使Q(S′,a)最大的a作为A′来更新价值函数。用数学公式表示就是：
+   $Q(S,A) = Q(S,A) + \alpha(R+\gamma \max_aQ(S',a) - Q(S,A))$
+   此时选择的动作只会参与价值函数的更新，不会真正的执行。价值函数更新后，新的执行动作需要基于状态S′，用ϵ−贪婪法重新选择得到。这一点也和SARSA稍有不同。对于SARSA，价值函数更新使用的A′会作为下一阶段开始时候的执行动作。
+
+** Q-Learning算法流程
+   Input:迭代轮数T，状态集S, 动作集A, 步长α，衰减因子γ, 探索率 $\epsilon$,
+   Output:所有的状态和动作对应的价值Q
+
+   - Q-Learning Algorithm
+     - 随机初始化所有的状态和动作对应的价值Q. 对于终止状态其Q值初始化为0.
+     - for i in range(T)
+       1.初始化S为当前序列的第一个状态
+       2.用 $\epsilon-greedy$ 在S选出动作A
+       3.在S执行A,得到S'和R
+       4.更新价值函数Q(S,A) $Q(S,A) + \alpha(R+\gamma \max_aQ(S',a) - Q(S,A))$
+       5.S = S'
+       6.如果S'是终止状态,当前迭代完毕,否则返回2
+
+* Deep Q-Learning
